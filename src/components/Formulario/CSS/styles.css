@@ -1,0 +1,11 @@
+.contendor-formulario{
+    width: 48%;
+    height: auto;
+    margin-bottom: 5vh;
+}
+
+@media(max-width:480px){
+    .contendor-formulario{
+        width: 90%;
+    }
+}
