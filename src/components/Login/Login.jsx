@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './CSS/styles.css';
 import vtv from './logo-vtv-transparente.png';
+const urlApi = import.meta.env.VITE_URL;
 
 export const Login = () => {
   const [nickname, setNickname] = useState('');
@@ -12,7 +13,7 @@ export const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault(); 
     try {
-      const response = await axios.post('https://control-cintillos-vtv.onrender.com/api/vtv/usuarios/login', {
+      const response = await axios.post(urlApi+'/usuarios/login', {
         nickname,
         contrasenia,
       });

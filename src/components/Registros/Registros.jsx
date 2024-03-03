@@ -2,61 +2,80 @@ import  { useState,useEffect } from 'react';
 import { Navbar } from "../Navbar/Navbar";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
-import { isThisWeek, isSameMonth, parseISO } from 'date-fns';
+import { isThisWeek, isSameMonth, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from 'date-fns';
+import axios from 'axios';
+const urlApi = import.meta.env.VITE_URL;
 
 export const Registros = () => {
-    const datosIniciales = [
-        { registradoPor: 'Juan Pérez', clienteProducto: 'Cliente A / Producto X', descripcion: 'Entrega de producto', fecha: '2024-02-01', hora: '10:00' },
-        { registradoPor: 'Ana Gómez', clienteProducto: 'Cliente B / Producto Y', descripcion: 'Inicio de servicio', fecha: '2024-03-01', hora: '11:30' },
-        // Agrega más registros aquí...
-    ];
+    
+    const [registros,setRegistros] =useState ([]);
+
+    const traerDatos = async () =>{
+       const response = await axios.get(urlApi+'/cintillos/cintillos') 
+       console.log(response); 
+       setRegistros(response.data)
+    }
+    useEffect(()=>{
+       traerDatos();
+    })
 
     const [filtro, setFiltro] = useState('ultimaSemana');
     const [mesSeleccionado, setMesSeleccionado] = useState('');
     const [datosFiltrados, setDatosFiltrados] = useState([]);
 
-       
+    useEffect(() => {
+        const aplicarFiltro = () => {
+            let datos = [];
+            if (filtro === 'ultimaSemana') {
+                datos = registros.filter(dato => isThisWeek(parseISO(dato.fecha), { weekStartsOn: 1 }));
+            } else if (filtro === 'esteMes' && mesSeleccionado) {
+                datos = registros.filter(dato => isSameMonth(parseISO(dato.fecha), parseISO(mesSeleccionado)));
+            } else if (filtro === 'todos') {
+                datos = [...registros];
+            }
+            setDatosFiltrados(datos.reverse());
+        };
+        aplicarFiltro();
+    }, [filtro, mesSeleccionado, registros]);
 
-    const aplicarFiltro = () => {
-        if (filtro === 'ultimaSemana') {
-            setDatosFiltrados(datosIniciales.filter(dato => isThisWeek(parseISO(dato.fecha))));
-        } else if (filtro === 'esteMes' && mesSeleccionado) {
-            setDatosFiltrados(datosIniciales.filter(dato => isSameMonth(parseISO(dato.fecha), parseISO(mesSeleccionado))));
-        } else {
-            setDatosFiltrados(datosIniciales);
+    const onhandleSelect = (dato) => {
+        if (dato === 'esteMes' && filtro !== 'esteMes') {
+            setMesSeleccionado(new Date().toISOString().slice(0, 7));
         }
+        setFiltro(dato);
     };
 
-    const onhandleSelect = (dato) =>{
-        setFiltro(dato)
-        aplicarFiltro()
-    }
-
-    // Función para generar el PDF
     const generarPDF = () => {
+        let textoFiltrado = '';
+        if (filtro === 'ultimaSemana') {
+            const inicioSemana = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+            const finSemana = format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+            textoFiltrado = `Última semana (del ${inicioSemana} al ${finSemana})`;
+        } else if (filtro === 'esteMes' && mesSeleccionado) {
+            const inicioMes = format(startOfMonth(parseISO(mesSeleccionado)), 'yyyy-MM-dd');
+            const finMes = format(endOfMonth(parseISO(mesSeleccionado)), 'yyyy-MM-dd');
+            textoFiltrado = `Este mes (del ${inicioMes} al ${finMes})`;
+        } else if (filtro === 'todos') {
+            textoFiltrado = 'Todos los registros';
+        }
+
         const doc = new jsPDF();
         doc.text('CONTROL DE CINTILLOS Y MENCIONES VTV', 14, 15);
-        doc.text(`Filtrado: ${filtro === 'esteMes' ? `Mes seleccionado - ${mesSeleccionado}` : filtro}`, 14, 20);
+        doc.text(`Filtrado: ${textoFiltrado}`, 14, 20);
         doc.autoTable({
             startY: 25,
             head: [['Registrado por', 'Cliente/Producto', 'Descripción', 'Fecha', 'Hora']],
-            body: datosFiltrados.map(dato => [dato.registradoPor, dato.clienteProducto, dato.descripcion, dato.fecha, dato.hora]),
+            body: datosFiltrados.map(dato => [dato.usuario, dato.nombre_cliente, dato.tipo, dato.fecha, dato.hora_transmitida]),
         });
         doc.save('informe.pdf');
     };
-
-    useEffect(()=>{
-
-        onhandleSelect('ultimaSemana')
-    },[])
-
     return (
         <>
             <Navbar />
             <section className="mt-5 w-100 h-100 d-flex justify-content-center">
                 <div className="tabla-registros">
                     <div className="mb-3">
-                        <select className="form-select" onChange={(e) =>onhandleSelect(e.target.value)}>
+                        <select className="form-select" onChange={(e) => onhandleSelect(e.target.value)}>
                             <option value="ultimaSemana">Última semana</option>
                             <option value="esteMes">Seleccionar mes</option>
                             <option value="todos">Todos</option>
@@ -65,6 +84,7 @@ export const Registros = () => {
                             <input
                                 type="month"
                                 className="form-control mt-2"
+                                value={mesSeleccionado}
                                 onChange={(e) => setMesSeleccionado(e.target.value)}
                             />
                         )}
@@ -107,11 +127,11 @@ export const Registros = () => {
                             <tbody>
                                 {datosFiltrados.map((dato, index) => (
                                     <tr key={index}>
-                                        <td>{dato.registradoPor}</td>
-                                        <td>{dato.clienteProducto}</td>
-                                        <td>{dato.descripcion}</td>
+                                        <td>{dato.usuario}</td>
+                                        <td>{dato.nombre_cliente}</td>
+                                        <td>{dato.tipo}</td>
                                         <td>{dato.fecha}</td>
-                                        <td>{dato.hora}</td>
+                                        <td>{dato.hora_transmitida}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -121,11 +141,11 @@ export const Registros = () => {
                         <ul className="list-group">
                             {datosFiltrados.map((dato, index) => (
                                 <li key={index} className="list-group-item">
-                                    <strong>Registrado por:</strong> {dato.registradoPor}<br />
-                                    <strong>Cliente/Producto:</strong> {dato.clienteProducto}<br />
-                                    <strong>Descripción:</strong> {dato.descripcion}<br />
+                                    <strong>Registrado por:</strong> {dato.usuario}<br />
+                                    <strong>Cliente/Producto:</strong> {dato.nombre_cliente}<br />
+                                    <strong>Descripción:</strong> {dato.tipo}<br />
                                     <strong>Fecha:</strong> {dato.fecha}<br />
-                                    <strong>Hora:</strong> {dato.hora}
+                                    <strong>Hora:</strong> {dato.hora_transmitida}
                                 </li>
                             ))}
                         </ul>

@@ -2,13 +2,15 @@ import { useState } from 'react';
 import './CSS/styles.css'
 import { Navbar } from '../Navbar/Navbar';
 import axios from 'axios';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
+const urlApi = import.meta.env.VITE_URL;
+
 export const Formulario = () => {
     const [time, setTime] = useState('');
     const [nombreProducto, setNombreProducto] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [fecha, setFecha] = useState('');
-    const url='https://control-cintillos-vtv.onrender.com/api/vtv/cintillos'
-    const user= (JSON.parse(localStorage.getItem('sesion_control'))).nombre_usuario
+    const user = (JSON.parse(localStorage.getItem('sesion_control'))).nombre_usuario;
 
     const handleTimeChange = (event) => {
         setTime(event.target.value);
@@ -26,24 +28,39 @@ export const Formulario = () => {
         setFecha(event.target.value);
     };
 
-    const registrar = async ()=>{
+    const limpiarFormulario = () => {
+        setTime('');
+        setNombreProducto('');
+        setDescripcion('');
+        setFecha('');
+    };
+
+    const registrar = async (event) => {
         event.preventDefault();
-        const data={
+        const data = {
             nombre_cliente: nombreProducto,
             tipo: descripcion,
             hora_transmitida: time,
             fecha: fecha,
             usuario: user,
+        };
+
+        try {
+            const response = await axios.post(urlApi+'/cintillos', data);
+            console.log(response.data);
+            Notify.success('Registro exitoso');
+            limpiarFormulario();
+        } catch (error) {
+            console.error('Error en el registro:', error);
+            Notify.failure('Error en el registro');
         }
+    };
 
-        const response = await axios.post(url,data)
-        console.log(response.data);
-    }
-
+    const isFormEmpty = !nombreProducto || !descripcion || !time || !fecha;
     return (
         <>
         <Navbar></Navbar>
-            <section className="mt-3 w-100 h-100 d-flex justify-content-center">
+            <section id='section-contenedor' className="mt-3 w-100 h-100 d-flex justify-content-center">
                 <div className="contendor-formulario">
                     <form>
                         <h4 className='fw-bold text-center mb-5'>Registrar</h4>
@@ -99,7 +116,7 @@ export const Formulario = () => {
                             />
                         </div>
                         <div className='mt-4 d-flex justify-content-center'>
-                            <button className='btn btn-success' onClick={registrar} type='btn'>Registrar</button>
+                            <button className='btn btn-success' disabled={isFormEmpty} onClick={registrar} type='btn'>Registrar</button>
                         </div>
                     </form>
                 </div>

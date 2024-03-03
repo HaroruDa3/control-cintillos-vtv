@@ -8,4 +8,7 @@
     .contendor-formulario{
         width: 90%;
     }
+    #section-contenedor{
+        margin-top: 4rem!important;
+    }
 }
