@@ -1,11 +1,14 @@
-import './CSS/styles.css'
 import { useState } from 'react';
-
+import './CSS/styles.css'
+import { Navbar } from '../Navbar/Navbar';
+import axios from 'axios';
 export const Formulario = () => {
     const [time, setTime] = useState('');
     const [nombreProducto, setNombreProducto] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [fecha, setFecha] = useState('');
+    const url='https://control-cintillos-vtv.onrender.com/api/vtv/cintillos'
+    const user= (JSON.parse(localStorage.getItem('sesion_control'))).nombre_usuario
 
     const handleTimeChange = (event) => {
         setTime(event.target.value);
@@ -23,8 +26,23 @@ export const Formulario = () => {
         setFecha(event.target.value);
     };
 
+    const registrar = async ()=>{
+        event.preventDefault();
+        const data={
+            nombre_cliente: nombreProducto,
+            tipo: descripcion,
+            hora_transmitida: time,
+            fecha: fecha,
+            usuario: user,
+        }
+
+        const response = await axios.post(url,data)
+        console.log(response.data);
+    }
+
     return (
         <>
+        <Navbar></Navbar>
             <section className="mt-3 w-100 h-100 d-flex justify-content-center">
                 <div className="contendor-formulario">
                     <form>
@@ -81,7 +99,7 @@ export const Formulario = () => {
                             />
                         </div>
                         <div className='mt-4 d-flex justify-content-center'>
-                            <button className='btn btn-success' type='btn'>Registrar</button>
+                            <button className='btn btn-success' onClick={registrar} type='btn'>Registrar</button>
                         </div>
                     </form>
                 </div>

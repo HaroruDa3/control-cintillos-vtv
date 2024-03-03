@@ -11,6 +11,9 @@
     height: 70vh;
     background-color: rgba(28, 28, 28, 0.264);
     border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .img-logo{
@@ -30,7 +33,8 @@
         font-size: 2rem;
     }
     .img-logo{
-        height: 18vh;
+        height: 12vh!important;
+        display: block;
     }
     #div-img{
         margin-top: 7vh!important;
