@@ -10,14 +10,14 @@ export const Registros = () => {
     
     const [registros,setRegistros] =useState ([]);
 
-    const traerDatos = async () =>{
-       const response = await axios.get(urlApi+'/cintillos/cintillos') 
-       console.log(response); 
-       setRegistros(response.data)
-    }
+    
     useEffect(()=>{
-       traerDatos();
-    })
+        const traerDatos = async () =>{
+            const response = await axios.get(urlApi+'/cintillos/cintillos') 
+            setRegistros(response.data)
+         }
+         traerDatos()
+    },[registros])
 
     const [filtro, setFiltro] = useState('ultimaSemana');
     const [mesSeleccionado, setMesSeleccionado] = useState('');
