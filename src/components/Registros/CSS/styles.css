@@ -1,0 +1,9 @@
+.tabla-registros{
+    width: 60%!important;
+}
+
+@media(max-width:480px){
+    .tabla-registros{
+        width: 80%!important;
+    } 
+}

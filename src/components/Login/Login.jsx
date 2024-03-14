@@ -1,4 +1,4 @@
-import{ useState } from 'react';
+import{ useState,useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './CSS/styles.css';
@@ -10,6 +10,22 @@ export const Login = () => {
   const [contrasenia, setContrasenia] = useState('');
   const navigate = useNavigate();
 
+  const verificarSesion = () => {
+    const sesion = localStorage.getItem('sesion_control');
+    if (sesion) {
+      const { tipo } = JSON.parse(sesion);
+      if (tipo === 'master') {
+        navigate('/Formulario');
+        window.location.reload();
+      } else if (tipo === 'programacion') {
+        navigate('/Registros');
+       // window.location.reload();
+      }
+    }
+  }
+  useEffect(() => {
+    verificarSesion()
+  }, [navigate]);
   const handleLogin = async (e) => {
     e.preventDefault(); 
     try {

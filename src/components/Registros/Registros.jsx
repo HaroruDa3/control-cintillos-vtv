@@ -1,5 +1,6 @@
 import  { useState,useEffect } from 'react';
 import { Navbar } from "../Navbar/Navbar";
+import './CSS/styles.css'
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 import { isThisWeek, isSameMonth, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from 'date-fns';
@@ -21,22 +22,27 @@ export const Registros = () => {
 
     const [filtro, setFiltro] = useState('ultimaSemana');
     const [mesSeleccionado, setMesSeleccionado] = useState('');
+    const [descripcionSeleccionada, setDescripcionSeleccionada] = useState('');
     const [datosFiltrados, setDatosFiltrados] = useState([]);
 
     useEffect(() => {
         const aplicarFiltro = () => {
-            let datos = [];
+            let datos = [...registros];
+    
             if (filtro === 'ultimaSemana') {
-                datos = registros.filter(dato => isThisWeek(parseISO(dato.fecha), { weekStartsOn: 1 }));
+                datos = datos.filter(dato => isThisWeek(parseISO(dato.fecha), { weekStartsOn: 1 }));
             } else if (filtro === 'esteMes' && mesSeleccionado) {
-                datos = registros.filter(dato => isSameMonth(parseISO(dato.fecha), parseISO(mesSeleccionado)));
-            } else if (filtro === 'todos') {
-                datos = [...registros];
+                datos = datos.filter(dato => isSameMonth(parseISO(dato.fecha), parseISO(mesSeleccionado)));
             }
+    
+            if (descripcionSeleccionada) {
+                datos = datos.filter(dato => dato.tipo === descripcionSeleccionada);
+            }
+    
             setDatosFiltrados(datos.reverse());
         };
         aplicarFiltro();
-    }, [filtro, mesSeleccionado, registros]);
+    }, [filtro, mesSeleccionado, registros, descripcionSeleccionada]);
 
     const onhandleSelect = (dato) => {
         if (dato === 'esteMes' && filtro !== 'esteMes') {
@@ -72,9 +78,10 @@ export const Registros = () => {
     return (
         <>
             <Navbar />
-            <section className="mt-5 w-100 h-100 d-flex justify-content-center">
+            <section className="mt-4 w-100 h-100 d-flex justify-content-center">
                 <div className="tabla-registros">
                     <div className="mb-3">
+                        <label className='mb-1 fw-bold' >Filtrar por descripción: </label>
                         <select className="form-select" onChange={(e) => onhandleSelect(e.target.value)}>
                             <option value="ultimaSemana">Última semana</option>
                             <option value="esteMes">Seleccionar mes</option>
@@ -88,10 +95,27 @@ export const Registros = () => {
                                 onChange={(e) => setMesSeleccionado(e.target.value)}
                             />
                         )}
-                        <button className="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#modalFechas">
-                            Imprimir Registro
-                        </button>
+                        <label className='mt-3' >Filtrar por descripción: </label>
+                        <select className="form-select mt-2" value={descripcionSeleccionada} onChange={(e) => setDescripcionSeleccionada(e.target.value)}>
+                            <option value="">Todos</option>
+                            <option value="CINTILLO">CINTILLO</option>
+                            <option value="SQUEEZBACK">SQUEEZBACK</option>
+                            <option value="MENCION">MENCION</option>
+                            <option value="CORTINA">CORTINA</option>
+                            <option value="SORTEO">SORTEO</option>
+                            <option value="PATROCINIO">PATROCINIO</option>
+                            <option value="CAPSULA">CAPSULA</option>
+                            <option value="HOLOGRAMA">HOLOGRAMA</option>
+                        </select>
+                       <div className='w-100 d-flex justify-content-center'>
+                        <button className="btn btn-primary mt-2 w-50" data-bs-toggle="modal" data-bs-target="#modalFechas">
+                                Imprimir Registro
+                            </button>
+                       </div>
+                       
                     </div>
+
+                    
 
                     {/* Modal para confirmar generación de PDF */}
                     <div className="modal fade" id="modalFechas" tabIndex="-1" aria-labelledby="modalFechasLabel" aria-hidden="true">
